@@ -16,12 +16,12 @@ public class ProductController {
 
     private final ProductService productService;
 
-    @GetMapping("/admin/products/{id}")
+    @GetMapping("products/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
         return ResponseEntity.ok(productService.getProductById(id));
     }
 
-    @GetMapping("/admin/products")
+    @GetMapping("/products")
     public ResponseEntity<List<Product>> getAllProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
     }
@@ -31,7 +31,7 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProductByCategory(categoryName));
     }
 
-    @GetMapping("/products/av")
+    @GetMapping("/products/available")
     public ResponseEntity<List<Product>> getAllAvailableProducts() {
         return ResponseEntity.ok(productService.getAvailableProducts());
     }
@@ -50,11 +50,6 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/admin/test")
-    public ResponseEntity<String> test() {
-        return ResponseEntity.ok("API is working!");
     }
 
 }

@@ -26,8 +26,4 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
-    @GetMapping("/test")
-    public ResponseEntity<String> test() {
-        return ResponseEntity.ok("API is working!");
-    }
 }
