@@ -26,6 +26,8 @@ public class AuthService {
     private final UserRepository userRepository;
     private final CartRepository cartRepository;
     private final PasswordEncoder passwordEncoder;
+
+
     private final AuthenticationManager authenticationManager;
 
     public AuthResponse register(RegisterRequest request) {
