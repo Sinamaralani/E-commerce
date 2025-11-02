@@ -1,7 +1,8 @@
 package org.example.ecommerce.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.ecommerce.entity.Category;
+import org.example.ecommerce.dto.request.CategoryRequest;
+import org.example.ecommerce.dto.response.CategoryResponse;
 import org.example.ecommerce.service.CategoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,29 +11,29 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/category")
+@RequestMapping("/api")
 public class CategoryController {
 
     private final CategoryService categoryService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<Category> getCategoryById(@PathVariable Long id) {
+    public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
-    @GetMapping
-    public ResponseEntity<List<Category>> getAllCategories() {
+    @GetMapping("/admin/category")
+    public ResponseEntity<List<CategoryResponse>> getAllCategories() {
         return ResponseEntity.ok(categoryService.getAllCategories());
     }
 
-    @PostMapping
-    public ResponseEntity<Category> createCategory(@RequestBody Category category) {
-        return ResponseEntity.ok(categoryService.createCategory(category));
+    @PostMapping("/admin/category")
+    public ResponseEntity<CategoryResponse> createCategory(@RequestBody CategoryRequest request) {
+        return ResponseEntity.ok(categoryService.createCategory(request));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody Category category) {
-        return ResponseEntity.ok(categoryService.updateCategory(id, category));
+    @PutMapping("/admin/category/{id}")
+    public ResponseEntity<CategoryResponse> updateCategory(@PathVariable Long id, @RequestBody CategoryRequest request) {
+        return ResponseEntity.ok(categoryService.updateCategory(id, request));
     }
 
     @DeleteMapping("/{id}")
