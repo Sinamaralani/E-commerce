@@ -1,6 +1,16 @@
 package org.example.ecommerce.dto.response;
 
-public record AuthResponse(
-        Long id, String JwtToken, String username, String email
-) {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class AuthResponse {
+    private Long id;
+    private String JwtToken;
+    private String username;
+    private String role;
+
 }

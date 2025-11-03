@@ -3,6 +3,8 @@ package org.example.ecommerce.service;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.example.ecommerce.dto.request.AddToCartRequest;
+import org.example.ecommerce.dto.response.CartItemResponse;
+import org.example.ecommerce.dto.response.CartResponse;
 import org.example.ecommerce.entity.Cart;
 import org.example.ecommerce.entity.CartItem;
 import org.example.ecommerce.entity.Product;
@@ -24,12 +26,13 @@ public class CartService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
 
-    public Cart getCart(Long userId) {
-        return cartRepository.findByUserId(userId).orElseThrow();
+    public CartResponse getCart(Long userId) {
+        Cart cart = cartRepository.findByUserId(userId).orElseThrow();
+        return toCartResponse(cart);
     }
 
     @Transactional
-    public Cart addToCart(Long userId, AddToCartRequest request) {
+    public CartResponse addToCart(Long userId, AddToCartRequest request) {
 
         User user = userRepository.findById(userId).orElseThrow();
 
@@ -69,12 +72,14 @@ public class CartService {
 
         cartItemRepository.save(cartItem);
         cart.calculateTotalPrice();
-        return cartRepository.save(cart);
+        cartRepository.save(cart);
+
+        return toCartResponse(cart);
 
     }
 
     @Transactional
-    public Cart updateCartItem(Long userId, Long itemId, Integer quantity) {
+    public CartResponse updateCartItem(Long userId, Long itemId, Integer quantity) {
 
         Cart cart = cartRepository.findByUserId(userId).orElseThrow();
 
@@ -91,12 +96,14 @@ public class CartService {
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
         cart.calculateTotalPrice();
-        return cartRepository.save(cart);
+        cartRepository.save(cart);
+
+        return toCartResponse(cart);
 
     }
 
     @Transactional
-    public Cart deleteCartItem(Long userId, Long itemId) {
+    public CartResponse deleteCartItem(Long userId, Long itemId) {
 
         Cart cart = cartRepository.findByUserId(userId).orElseThrow();
 
@@ -108,7 +115,9 @@ public class CartService {
         cart.getCartItems().remove(cartItem);
         cartItemRepository.delete(cartItem);
         cart.calculateTotalPrice();
-        return cartRepository.save(cart);
+        cartRepository.save(cart);
+
+        return toCartResponse(cart);
     }
 
     public void clearCart(Long userId) {
@@ -118,6 +127,26 @@ public class CartService {
         cart.getCartItems().clear();
         cart.setTotalPrice(BigDecimal.ZERO);
         cartRepository.save(cart);
+    }
+
+    private CartResponse toCartResponse(Cart cart) {
+        CartResponse cartResponse = new CartResponse();
+        cartResponse.setId(cart.getId());
+        cartResponse.setItems(cart.getCartItems().stream().map(this::toCartItemResponse).toList());
+        cartResponse.setTotalPrice(cart.getTotalPrice());
+        cartResponse.setTotalItems(cart.getCartItems().size());
+        return cartResponse;
+    }
+
+    private CartItemResponse toCartItemResponse(CartItem cartItem) {
+        CartItemResponse cartItemResponse = new CartItemResponse();
+        cartItemResponse.setId(cartItemResponse.getId());
+        cartItemResponse.setProductId(cartItemResponse.getProductId());
+        cartItemResponse.setProductName(cartItem.getProduct().getName());
+        cartItemResponse.setPrice(cartItem.getPrice());
+        cartItemResponse.setQuantity(cartItem.getQuantity());
+        cartItemResponse.setTotalPrice(cartItem.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+        return cartItemResponse;
     }
 
 }
