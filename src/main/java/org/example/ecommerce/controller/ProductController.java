@@ -5,6 +5,7 @@ import org.example.ecommerce.dto.request.ProductRequest;
 import org.example.ecommerce.dto.response.ProductResponse;
 import org.example.ecommerce.service.ProductService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class ProductController {
     }
 
     @GetMapping("/admin/products")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ProductResponse>> getAllProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
     }
@@ -37,21 +39,28 @@ public class ProductController {
     }
 
     @PostMapping("/admin/products")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductRequest request) {
         return ResponseEntity.ok(productService.createProduct(request));
     }
 
     @PutMapping("/admin/products/{id}")
-    public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @RequestBody ProductRequest request) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProductResponse> updateProduct(
+            @PathVariable Long id,
+            @RequestBody ProductRequest request) {
         return ResponseEntity.ok(productService.updateProduct(id, request));
     }
 
-    @PostMapping("/{id}")
-    public ResponseEntity<ProductResponse> updateStock(@PathVariable Long id, @RequestBody Integer request) {
+    @PutMapping("/admin/products/stock/{id}")
+    public ResponseEntity<ProductResponse> updateStock(
+            @PathVariable Long id,
+            @RequestBody Integer request) {
         return ResponseEntity.ok(productService.updateStock(id, request));
     }
 
     @DeleteMapping("/admin/products/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok().build();
