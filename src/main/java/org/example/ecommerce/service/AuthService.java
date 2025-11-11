@@ -7,6 +7,7 @@ import org.example.ecommerce.dto.response.AuthResponse;
 import org.example.ecommerce.entity.Cart;
 import org.example.ecommerce.entity.User;
 import org.example.ecommerce.enums.Role;
+import org.example.ecommerce.exception.BadRequestException;
 import org.example.ecommerce.repository.CartRepository;
 import org.example.ecommerce.repository.UserRepository;
 import org.example.ecommerce.security.JwtUtils;
@@ -15,6 +16,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -31,10 +33,10 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.findByUsername(request.getUsername()).isPresent())
-            throw new RuntimeException("Username is already in use");
+            throw new BadRequestException("Username is already taken");
 
         if (userRepository.findByEmail(request.getEmail()).isPresent())
-            throw new RuntimeException("Email is already in use");
+            throw new BadRequestException("Email is already taken");
 
         User user = new User();
         user.setFirstName(request.getFirstName());
@@ -51,29 +53,21 @@ public class AuthService {
         cart.setUser(savedUser);
         cartRepository.save(cart);
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword())
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwtToken = jwtUtils.generateJwtToken(authentication);
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-
-        return new AuthResponse(
-                userDetails.getId(),
-                jwtToken,
-                userDetails.getUsername(),
-                userDetails.getAuthorities().iterator().next().getAuthority()
-        );
+        return helper(request.getUsername(), request.getPassword());
     }
 
     public AuthResponse login(LoginRequest request) {
 
+        if (userRepository.findByUsername(request.getUsername()).isEmpty())
+            throw new UsernameNotFoundException("Username not found");
+
+        return helper(request.getUsername(), request.getPassword());
+    }
+
+    private AuthResponse helper(String username, String password) {
+
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword())
+                new UsernamePasswordAuthenticationToken(username, password)
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwtToken = jwtUtils.generateJwtToken(authentication);
@@ -86,4 +80,5 @@ public class AuthService {
                 userDetails.getAuthorities().iterator().next().getAuthority()
         );
     }
+
 }

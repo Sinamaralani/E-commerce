@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.ecommerce.dto.request.CategoryRequest;
 import org.example.ecommerce.dto.response.CategoryResponse;
 import org.example.ecommerce.entity.Category;
+import org.example.ecommerce.exception.BadRequestException;
+import org.example.ecommerce.exception.ResourceNotFoundException;
 import org.example.ecommerce.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +19,8 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     public CategoryResponse getCategoryById(Long id) {
-        Category category = categoryRepository.findById(id).orElseThrow();
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
         return toCategoryResponse(category);
     }
 
@@ -28,7 +31,8 @@ public class CategoryService {
 
     public CategoryResponse createCategory(CategoryRequest request) {
 
-        if (categoryRepository.existsByName(request.getName())) throw new RuntimeException("Category already exists");
+        if (categoryRepository.existsByName(request.getName()))
+            throw new BadRequestException("Category already exists");
 
         Category category = new Category();
         category.setName(request.getName());
@@ -38,10 +42,11 @@ public class CategoryService {
 
     public CategoryResponse updateCategory(Long id, CategoryRequest request) {
 
-        Category category = categoryRepository.findById(id).orElseThrow();
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
 
         if (category.getName().equals(request.getName()) && categoryRepository.existsByName(request.getName()))
-            throw new RuntimeException("Category already exists");
+            throw new BadRequestException("Category already exists");
 
         category.setName(request.getName());
         category.setDescription(request.getDescription());

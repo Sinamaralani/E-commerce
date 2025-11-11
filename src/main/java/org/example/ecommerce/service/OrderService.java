@@ -10,6 +10,8 @@ import org.example.ecommerce.entity.OrderItem;
 import org.example.ecommerce.entity.Product;
 import org.example.ecommerce.entity.User;
 import org.example.ecommerce.enums.OrderStatus;
+import org.example.ecommerce.exception.BadRequestException;
+import org.example.ecommerce.exception.ResourceNotFoundException;
 import org.example.ecommerce.repository.OrderRepository;
 import org.example.ecommerce.repository.ProductRepository;
 import org.example.ecommerce.repository.UserRepository;
@@ -41,10 +43,11 @@ public class OrderService {
     @Transactional
     public OrderResponse createOrder(Long userId, OrderRequest request) {
 
-        User user = userRepository.findById(userId).orElseThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         var cartResponse = cartService.getCart(userId);
-        if (cartResponse.getItems().isEmpty()) throw new RuntimeException("");
+        if (cartResponse.getItems().isEmpty()) throw new BadRequestException("Cart is empty");
 
         Order order = new Order();
         order.setUser(user);
@@ -57,8 +60,11 @@ public class OrderService {
 
         for (var cartItem : cartResponse.getItems()) {
 
-            Product product = productRepository.findById(cartItem.getProductId()).orElseThrow();
-            if (product.getStockQuantity() < cartItem.getQuantity()) throw new RuntimeException("");
+            Product product = productRepository.findById(cartItem.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + cartItem.getProductId()));
+
+            if (product.getStockQuantity() < cartItem.getQuantity())
+                throw new BadRequestException("Stock Quantity exceeded");
 
 
             OrderItem orderItem = new OrderItem();
@@ -83,7 +89,8 @@ public class OrderService {
     @Transactional
     public OrderResponse updateOrderStatus(Long orderId, OrderStatus status) {
 
-        Order order = orderRepository.findById(orderId).orElseThrow();
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 
         order.setStatus(status);
         return toOrderResponse(orderRepository.save(order));
@@ -91,14 +98,17 @@ public class OrderService {
 
     public void cancelOrder(Long userId, Long orderId) {
 
-        Order order = orderRepository.findById(orderId).orElseThrow();
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 
-        if (order.getUser().getId().equals(userId)) throw new RuntimeException("");
+        if (!order.getUser().getId().equals(userId))
+            throw new BadRequestException("Order is not for this user");
 
         if (order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.SHIPPED)
-            throw new RuntimeException("");
+            throw new BadRequestException("Order has been Delivered or Shipped");
 
-        if (order.getStatus() == OrderStatus.CANCELLED) throw new RuntimeException("");
+        if (order.getStatus() == OrderStatus.CANCELLED)
+            throw new BadRequestException("Order has been already cancelled");
 
         for (OrderItem item : order.getItems()) {
             Product product = item.getProduct();

@@ -9,6 +9,8 @@ import org.example.ecommerce.entity.Cart;
 import org.example.ecommerce.entity.CartItem;
 import org.example.ecommerce.entity.Product;
 import org.example.ecommerce.entity.User;
+import org.example.ecommerce.exception.BadRequestException;
+import org.example.ecommerce.exception.ResourceNotFoundException;
 import org.example.ecommerce.repository.CartItemRepository;
 import org.example.ecommerce.repository.CartRepository;
 import org.example.ecommerce.repository.ProductRepository;
@@ -34,16 +36,18 @@ public class CartService {
     @Transactional
     public CartResponse addToCart(Long userId, AddToCartRequest request) {
 
-        User user = userRepository.findById(userId).orElseThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-        Product product = productRepository.findById(request.getProductId()).orElseThrow();
+        Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + request.getProductId()));
 
         if (!product.getIsAvailable()) {
-            throw new RuntimeException("Product is not available");
+            throw new ResourceNotFoundException("Product is not available with id: " + request.getProductId());
         }
 
         if (product.getStockQuantity() < request.getQuantity()) {
-            throw new RuntimeException("Stock quantity less than request quantity");
+            throw new BadRequestException("Stock quantity less than request quantity");
         }
 
         Cart cart = cartRepository.findByUserId(userId)
@@ -58,7 +62,7 @@ public class CartService {
         if (cartItem != null) {
             int newQuantity = cartItem.getQuantity() + request.getQuantity();
             if (newQuantity < request.getQuantity()) {
-                throw new RuntimeException("Quantity less than request quantity");
+                throw new BadRequestException("Quantity less than request quantity");
             }
             cartItem.setQuantity(newQuantity);
         } else {
@@ -81,17 +85,19 @@ public class CartService {
     @Transactional
     public CartResponse updateCartItem(Long userId, Long itemId, Integer quantity) {
 
-        Cart cart = cartRepository.findByUserId(userId).orElseThrow();
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found for user :" + userId));
 
-        CartItem cartItem = cartItemRepository.findById(itemId).orElseThrow();
+        CartItem cartItem = cartItemRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart item not found with id: " + itemId));
 
         if (!cartItem.getCart().getId().equals(cart.getId())) {
-            throw new RuntimeException("Cart item already exists");
+            throw new BadRequestException("Cart item already exists");
         }
 
-        if (quantity <= 0) throw new RuntimeException("Quantity less than request quantity");
+        if (quantity <= 0) throw new BadRequestException("Quantity less than request quantity");
 
-        if (cartItem.getQuantity() < quantity) throw new RuntimeException("Quantity less than request quantity");
+        if (cartItem.getQuantity() < quantity) throw new BadRequestException("Quantity less than request quantity");
 
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
@@ -105,12 +111,14 @@ public class CartService {
     @Transactional
     public CartResponse deleteCartItem(Long userId, Long itemId) {
 
-        Cart cart = cartRepository.findByUserId(userId).orElseThrow();
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found for user: " + userId));
 
-        CartItem cartItem = cartItemRepository.findById(itemId).orElseThrow();
+        CartItem cartItem = cartItemRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart item not found with id: " + itemId));
 
         if (!cartItem.getCart().getId().equals(cart.getId()))
-            throw new RuntimeException("Cart item is not for this user");
+            throw new BadRequestException("Cart item is not for this user");
 
         cart.getCartItems().remove(cartItem);
         cartItemRepository.delete(cartItem);
@@ -122,7 +130,8 @@ public class CartService {
 
     public void clearCart(Long userId) {
 
-        Cart cart = cartRepository.findByUserId(userId).orElseThrow();
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found for user: " + userId));
 
         cart.getCartItems().clear();
         cart.setTotalPrice(BigDecimal.ZERO);

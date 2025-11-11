@@ -24,7 +24,7 @@ public class ProductService {
 
     public ProductResponse getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id" + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
         return toProductResponse(product);
     }
 
@@ -35,7 +35,7 @@ public class ProductService {
 
     public List<ProductResponse> getProductByCategory(String categoryName) {
         if (!categoryRepository.existsByName(categoryName))
-            throw new ResourceNotFoundException("Category not found with name " + categoryName);
+            throw new ResourceNotFoundException("Category not found with name: " + categoryName);
         return productRepository.findByCategoryName(categoryName)
                 .stream().map(this::toProductResponse).collect(Collectors.toList());
     }
@@ -49,7 +49,7 @@ public class ProductService {
     public ProductResponse createProduct(ProductRequest request) {
 
         Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id" + request.getCategoryId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
 
         Product product = new Product();
         return helper(product, category, request);
@@ -61,10 +61,10 @@ public class ProductService {
     public ProductResponse updateProduct(Long id, ProductRequest request) {
 
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id" + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
         Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id" + request.getCategoryId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
 
         return helper(product, category, request);
 
@@ -73,7 +73,7 @@ public class ProductService {
     public ProductResponse updateStock(Long id, Integer stockQuantity) {
 
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id" + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
         int newStockQuantity = product.getStockQuantity() + stockQuantity;
         if (newStockQuantity < 0) throw new BadRequestException("stock quantity cannot be less than 0");
@@ -84,7 +84,7 @@ public class ProductService {
 
     public void deleteProduct(Long id) {
         if (productRepository.findById(id).isEmpty())
-            throw new ResourceNotFoundException("Product not found with id" + id);
+            throw new ResourceNotFoundException("Product not found with id: " + id);
         productRepository.deleteById(id);
     }
 
